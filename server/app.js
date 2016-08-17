@@ -3,11 +3,13 @@ const PORT = process.env.PORT || 8000;
 const MONGO_URI = process.env.MONGOLAB_URI || 'mongodb://localhost/todoapp';
 
 //Package requires
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
-const express = require('express')
-const morgan = require('morgan')
-const path = require('path')
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const express = require('express');
+const morgan = require('morgan');
+const path = require('path');
+const webpack =require('webpack');
+const webpackConfig = require('../webpack.config');
 
 //DB Connect
 require('mongoose').connect(MONGO_URI,err =>{
@@ -18,6 +20,16 @@ require('mongoose').connect(MONGO_URI,err =>{
 //App Declaration
 const app = express();
 
+//WEBPACK CONFIG
+const compiler = webpack(webpackConfig);
+
+app.use(require('webpack-dev-middleware')(compiler,{
+  noInfo:true,
+  publicPath:webpackConfig.output.publicPath
+}));
+
+app.use(require('webpack-hot-middleware')(compiler));
+
 //General Middleware
 app.use(morgan('dev'));
 app.use(bodyParser.json());
@@ -27,8 +39,9 @@ app.use(cookieParser());
 //Routes
 app.use('/api',require('./routes/api'));
 
-app.get('/', (req, res) => {
-  res.send('working\n');
+app.get('*', (req, res) => {
+  let indexPath = path.join(__dirname,'../index.html');
+  res.sendFile(indexPath);
 })
 
 //Serve Listen
